@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MemeForge AI - Multimodal Engine</title>
+  
+  <!-- Fonts: Inter for UI, Space Grotesk for Headings -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            heading: ['Space Grotesk', 'sans-serif'],
+          },
+          colors: {
+            navy: {
+              800: '#1a2035',
+              900: '#0B1120',
+              950: '#060A14'
+            }
+          },
+          animation: {
+            'blob': 'blob 7s infinite',
+          },
+          keyframes: {
+            blob: {
+              '0%': { transform: 'translate(0px, 0px) scale(1)' },
+              '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+              '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+              '100%': { transform: 'translate(0px, 0px) scale(1)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Custom CSS for specific elements (slider, glassmorphism) -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-navy-900 text-slate-200 min-h-screen relative overflow-x-hidden font-sans selection:bg-cyan-500/30">
+
+  <!-- Animated Background Blobs -->
+  <div class="fixed inset-0 w-full h-full z-0 overflow-hidden pointer-events-none">
+    <div class="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-600/20 blur-[100px] mix-blend-screen animate-blob"></div>
+    <div class="absolute top-[20%] right-[-10%] w-[35vw] h-[35vw] rounded-full bg-cyan-500/20 blur-[120px] mix-blend-screen animate-blob animation-delay-2000"></div>
+    <div class="absolute bottom-[-20%] left-[20%] w-[50vw] h-[50vw] rounded-full bg-indigo-600/10 blur-[150px] mix-blend-screen animate-blob animation-delay-4000"></div>
+  </div>
+
+  <div class="relative z-10 flex flex-col items-center min-h-screen p-4 sm:p-8">
+    
+    <!-- Header -->
+    <header class="w-full max-w-4xl flex justify-between items-center mb-12">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+          <i data-lucide="sparkles" class="text-white w-5 h-5"></i>
+        </div>
+        <h1 class="font-heading text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+          MemeForge <span class="text-cyan-400">AI</span>
+        </h1>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-2xl bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-10 shadow-2xl">
+      
+      <!-- Upload Area -->
+      <div class="mb-8 relative group" id="upload-zone">
+        <input type="file" id="media-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" accept="image/*,video/mp4,video/webm" />
+        <div class="flex flex-col items-center justify-center p-8 border-2 border-dashed border-blue-500/30 rounded-2xl bg-navy-800/50 group-hover:bg-blue-900/20 group-hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
+          
+          <!-- Default State -->
+          <div id="upload-prompt" class="flex flex-col items-center pointer-events-none transition-opacity duration-300">
+            <div class="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <i data-lucide="image-plus" class="text-cyan-400 w-8 h-8"></i>
+            </div>
+            <p class="font-medium text-slate-200 mb-1">Drag & Drop Image or Video</p>
+            <p class="text-sm text-slate-400 text-center max-w-xs">or click to browse from your device. Supports JPG, PNG, GIF, MP4</p>
+          </div>
+
+          <!-- Preview State -->
+          <div id="media-preview-container" class="absolute inset-0 w-full h-full hidden bg-black/40 backdrop-blur-sm flex items-center justify-center z-30">
+            <img id="image-preview" class="max-h-full max-w-full object-contain hidden rounded-lg shadow-lg" alt="Preview" />
+            <video id="video-preview" class="max-h-full max-w-full object-contain hidden rounded-lg shadow-lg" controls muted loop></video>
+            <button id="remove-media" class="absolute top-2 right-2 w-8 h-8 bg-red-500/80 hover:bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg transition-colors z-40 cursor-pointer">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Optional Topic Context -->
+      <div class="mb-8">
+        <label for="topic-input" class="block text-sm font-medium text-slate-300 mb-2">Topic / Context (Optional)</label>
+        <input type="text" id="topic-input" class="w-full bg-navy-800/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all" placeholder="e.g., 'Me ignoring my responsibilities' or leave blank to let AI decide." />
+      </div>
+
+      <!-- Mode Selector -->
+      <div class="mb-8">
+        <label class="block text-sm font-medium text-slate-300 mb-2">Output Mode</label>
+        <div class="flex p-1 bg-navy-800/80 rounded-xl" id="mode-selector">
+          <button data-mode="Caption" class="mode-btn flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all active-mode">Caption</button>
+          <button data-mode="Comment" class="mode-btn flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white">Comment</button>
+          <button data-mode="Both" class="mode-btn flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white">Both</button>
+        </div>
+      </div>
+
+      <!-- Spiciness Level Slider -->
+      <div class="mb-10">
+        <div class="flex justify-between items-center mb-4">
+          <label for="intensity-slider" class="text-sm font-medium text-slate-300">Spiciness Level: <span id="intensity-val" class="text-cyan-400 font-bold ml-1">5</span>/10</label>
+          <span id="intensity-label" class="text-xs text-slate-400 bg-white/5 px-2 py-1 rounded-md">Witty & Mild</span>
+        </div>
+        <div class="relative w-full h-2 bg-navy-800 rounded-full">
+          <input type="range" id="intensity-slider" min="1" max="10" value="5" class="custom-slider absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+          <div class="absolute top-0 left-0 h-full bg-gradient-to-r from-cyan-400 to-indigo-500 rounded-full pointer-events-none" id="slider-progress" style="width: 50%;"></div>
+          <div class="absolute top-1/2 -mt-2.5 w-5 h-5 bg-white rounded-full shadow-[0_0_10px_rgba(56,189,248,0.8)] pointer-events-none transition-all duration-75" id="slider-thumb" style="left: calc(50% - 10px);"></div>
+        </div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500 font-medium">
+          <span>Mild</span>
+          <span>Chaos</span>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <button id="generate-btn" class="w-full relative group overflow-hidden rounded-xl font-semibold text-lg py-4 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed">
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-600 group-hover:to-indigo-600 transition-colors"></div>
+        <div class="absolute inset-0 opacity-0 group-hover:opacity-20 bg-[radial-gradient(circle_at_center,_white_0%,_transparent_50%)] animate-pulse"></div>
+        <span class="relative flex justify-center items-center gap-2 text-white shadow-sm" id="btn-text">
+          Generate Meme Magic ✨
+        </span>
+      </button>
+
+    </main>
+
+    <!-- Output Area -->
+    <div id="output-area" class="w-full max-w-2xl mt-8 flex flex-col gap-4 hidden">
+      <!-- Generated cards will be injected here -->
+    </div>
+    
+    <!-- Loading Skeletons -->
+    <div id="loading-skeletons" class="w-full max-w-2xl mt-8 flex flex-col gap-4 hidden">
+      <div class="w-full h-24 bg-white/5 border border-white/5 rounded-2xl animate-pulse"></div>
+      <div class="w-full h-24 bg-white/5 border border-white/5 rounded-2xl animate-pulse animation-delay-100"></div>
+      <div class="w-full h-24 bg-white/5 border border-white/5 rounded-2xl animate-pulse animation-delay-200"></div>
+    </div>
+
+  </div>
+
+  <script>lucide.createIcons();</script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
